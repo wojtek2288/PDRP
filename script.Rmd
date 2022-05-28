@@ -1,0 +1,13 @@
+```{r}
+library("xml2")
+library("dplyr")
+library("rvest")
+
+getDataFromFile <- function(path)
+{
+  doc <- read_xml(path)
+  
+  rows <- doc %>% xml_nodes("row")
+  bind_rows(lapply(xml_attrs(rows), function(x) data.frame(as.list(x), stringsAsFactors=FALSE)))
+}
+```
