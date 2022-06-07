@@ -384,6 +384,67 @@ getDataFromFile &lt;- function(path)
   rows &lt;- doc %&gt;% xml_nodes(&quot;row&quot;)
   bind_rows(lapply(xml_attrs(rows), function(x) data.frame(as.list(x), stringsAsFactors=FALSE)))
 }</code></pre>
+<pre class="r"><code>astronomyBadges &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Badges.xml&quot;)</code></pre>
+<pre><code>## Warning: `xml_nodes()` was deprecated in rvest 1.0.0.
+## Please use `html_elements()` instead.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.</code></pre>
+<pre class="r"><code>astronomyComments &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Comments.xml&quot;)
+astronomyPostHistory &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/PostHistory.xml&quot;)
+astronomyPostLinks &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/PostLinks.xml&quot;)
+astronomyPosts &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Posts.xml&quot;)
+astronomyTags &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Tags.xml&quot;)
+astronomyUsers &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Users.xml&quot;)
+astronomyVotes &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Votes.xml&quot;)
+
+getLocationsWithBestScore &lt;- function()
+{
+  astronomyUsers %&gt;%
+    inner_join(astronomyPosts, by=c(&#39;Id&#39; = &#39;OwnerUserId&#39;)) %&gt;%
+    filter(Location != &#39;&#39;) %&gt;%
+    group_by(Location) %&gt;%
+    summarise(Scores = sum(as.numeric(Score))) %&gt;%
+    arrange(desc(Scores)) %&gt;%
+    head(10)
+}
+
+getLocationsWithBestScore()</code></pre>
+<pre><code>## # A tibble: 10 x 2
+##    Location                                               Scores
+##    &lt;chr&gt;                                                   &lt;dbl&gt;
+##  1 United Kingdom                                           8766
+##  2 Taipei, Earth                                            4803
+##  3 A small planet somewhere in the vicinity of Betelgeuse   3113
+##  4 Copenhagen, Denmark                                      2599
+##  5 Houston, TX                                              2478
+##  6 Virginia, USA                                            2171
+##  7 California                                               1881
+##  8 Europe                                                   1483
+##  9 Munich, Germany                                          1398
+## 10 USA                                                      1344</code></pre>
+<pre class="r"><code>getYearsWhenMostUsersSignedUp &lt;- function()
+{
+  astronomyUsers %&gt;%
+    group_by(Year = format(as.Date(CreationDate), &quot;%Y&quot;)) %&gt;%
+    summarize(Count = n()) %&gt;%
+    arrange(desc(Count)) %&gt;%
+    head(10)
+}
+
+getYearsWhenMostUsersSignedUp()</code></pre>
+<pre><code>## # A tibble: 10 x 2
+##    Year  Count
+##    &lt;chr&gt; &lt;int&gt;
+##  1 2017   5035
+##  2 2018   4596
+##  3 2021   4289
+##  4 2020   4043
+##  5 2019   3921
+##  6 2016   3666
+##  7 2015   2742
+##  8 2014   2285
+##  9 2022    711
+## 10 2013    668</code></pre>
 
 
 

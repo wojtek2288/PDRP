@@ -2,6 +2,7 @@
 library("xml2")
 library("dplyr")
 library("rvest")
+library("fuzzyjoin")
 
 getDataFromFile <- function(path)
 {
@@ -10,4 +11,107 @@ getDataFromFile <- function(path)
   rows <- doc %>% xml_nodes("row")
   bind_rows(lapply(xml_attrs(rows), function(x) data.frame(as.list(x), stringsAsFactors=FALSE)))
 }
+```
+
+```{r}
+
+astronomyBadges <- getDataFromFile("astronomy.stackexchange.com/Badges.xml")
+astronomyComments <- getDataFromFile("astronomy.stackexchange.com/Comments.xml")
+astronomyPostHistory <- getDataFromFile("astronomy.stackexchange.com/PostHistory.xml")
+astronomyPostLinks <- getDataFromFile("astronomy.stackexchange.com/PostLinks.xml")
+astronomyPosts <- getDataFromFile("astronomy.stackexchange.com/Posts.xml")
+astronomyTags <- getDataFromFile("astronomy.stackexchange.com/Tags.xml")
+astronomyUsers <- getDataFromFile("astronomy.stackexchange.com/Users.xml")
+astronomyVotes <- getDataFromFile("astronomy.stackexchange.com/Votes.xml")
+
+ebooksBadges <- getDataFromFile("ebooks.stackexchange.com/Badges.xml")
+ebooksComments <- getDataFromFile("ebooks.stackexchange.com/Comments.xml")
+ebooksPostHistory <- getDataFromFile("ebooks.stackexchange.com/PostHistory.xml")
+ebooksPostLinks <- getDataFromFile("ebooks.stackexchange.com/PostLinks.xml")
+ebooksPosts <- getDataFromFile("ebooks.stackexchange.com/Posts.xml")
+ebooksTags <- getDataFromFile("ebooks.stackexchange.com/Tags.xml")
+ebooksUsers <- getDataFromFile("ebooks.stackexchange.com/Users.xml")
+ebooksVotes <- getDataFromFile("ebooks.stackexchange.com/Votes.xml")
+
+devopsBadges <- getDataFromFile("devops.stackexchange.com/Badges.xml")
+devopsComments <- getDataFromFile("devops.stackexchange.com/Comments.xml")
+devopsPostHistory <- getDataFromFile("devops.stackexchange.com/PostHistory.xml")
+devopsPostLinks <- getDataFromFile("devops.stackexchange.com/PostLinks.xml")
+devopsPosts <- getDataFromFile("devops.stackexchange.com/Posts.xml")
+devopsTags <- getDataFromFile("devops.stackexchange.com/Tags.xml")
+devopsUsers <- getDataFromFile("devops.stackexchange.com/Users.xml")
+devopsVotes <- getDataFromFile("devops.stackexchange.com/Votes.xml")
+
+
+getLocationsWithBestScore <- function(usersDataFrame, postsDataFrame)
+{
+  usersDataFrame %>%
+    inner_join(postsDataFrame, by=c('Id' = 'OwnerUserId')) %>%
+    filter(Location != '') %>%
+    group_by(Location) %>%
+    summarise(Scores = sum(as.numeric(Score))) %>%
+    arrange(desc(Scores)) %>%
+    head(10)
+}
+
+getYearsWhenMostUsersSignedUp <- function(usersDataFrame)
+{
+  usersDataFrame %>%
+    group_by(Year = format(as.Date(CreationDate), "%Y")) %>%
+    summarize(Count = n()) %>%
+    arrange(desc(Count)) %>%
+    head(10)
+}
+
+groupTags <- function(postsDataFrame)
+{
+  strings <- postsDataFrame[, c("Tags")]
+  df <- data.frame(matrix(ncol = 2, nrow = 0))
+  colnames(df) <- c("PostId", "Tag")
+  for (i in 1:length(strings))
+  {
+    if (is.na(strings[i]))
+    {
+      next
+    }
+    splited <- strsplit(gsub('<', '', strings[i]), split = ">")
+    for (j in 1:length(splited[[1]]))
+    {
+      df[nrow(df) + 1,] = c(postsDataFrame[i, 1], splited[[1]][j])
+    }
+  }
+  
+  df
+}
+
+mostPopularTagInYears <- function(postsDataFrame)
+{
+  groupedTags <- groupTags(postsDataFrame)
+  
+  groupedTags %>%
+    inner_join(postsDataFrame, c('PostId' = 'Id')) %>%
+    group_by(Year = format(as.Date(CreationDate), "%Y"), Tag) %>%
+    summarise(Views = sum(as.numeric(ViewCount))) %>%
+    arrange(desc(Views)) %>%
+    select(Tag, Year, Views) -> groupedTagsByYear
+  
+  groupedTagsByYear %>%
+    group_by(Year) %>%
+    summarise(Tag = Tag[which.max(Views)], Views = Views[which.max(Views)]) %>%
+    arrange(desc(Views))
+}
+
+tagsWithBestAvgScore <- function(postsDataFrame)
+{
+  groupedTags <- groupTags(postsDataFrame)
+  
+  groupedTags %>%
+    inner_join(postsDataFrame, c('PostId' = 'Id')) %>%
+    group_by(Tag) %>%
+    summarise(AvgScore = mean(as.numeric(Score)), Count = n()) %>%
+    arrange(desc(AvgScore)) %>%
+    filter(Count >= 10) %>%
+    head(10)
+}
+
 ```
