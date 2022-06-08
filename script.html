@@ -416,7 +416,16 @@ devopsVotes &lt;- getDataFromFile(&quot;devops.stackexchange.com/Votes.xml&quot;
 </div>
 <div id="definicje-zapytań" class="section level2">
 <h2>Definicje zapytań</h2>
-<pre class="r"><code>getLocationsWithBestScore &lt;- function(usersDataFrame, postsDataFrame)
+<pre class="r"><code>getYearsWhenMostUsersSignedUp &lt;- function(usersDataFrame)
+{
+  usersDataFrame %&gt;%
+    group_by(Year = format(as.Date(CreationDate), &quot;%Y&quot;)) %&gt;%
+    summarize(Count = n()) %&gt;%
+    arrange(desc(Count)) %&gt;%
+    head(10)
+}
+
+getLocationsWithBestScore &lt;- function(usersDataFrame, postsDataFrame)
 {
   usersDataFrame %&gt;%
     inner_join(postsDataFrame, by=c(&#39;Id&#39; = &#39;OwnerUserId&#39;)) %&gt;%
@@ -424,16 +433,7 @@ devopsVotes &lt;- getDataFromFile(&quot;devops.stackexchange.com/Votes.xml&quot;
     group_by(Location) %&gt;%
     summarise(Scores = sum(as.numeric(Score))) %&gt;%
     arrange(desc(Scores)) %&gt;%
-    head(10)
-}
-
-getYearsWhenMostUsersSignedUp &lt;- function(usersDataFrame)
-{
-  usersDataFrame %&gt;%
-    group_by(Year = format(as.Date(CreationDate), &quot;%Y&quot;)) %&gt;%
-    summarize(Count = n()) %&gt;%
-    arrange(desc(Count)) %&gt;%
-    head(10)
+    head(1000)
 }
 
 groupTags &lt;- function(postsDataFrame)
@@ -489,60 +489,6 @@ tagsWithBestAvgScore &lt;- function(postsDataFrame)
 </div>
 <div id="wyniki" class="section level2">
 <h2>Wyniki</h2>
-<div id="lokalizacje-z-najlepszym-score" class="section level3">
-<h3>Lokalizacje z najlepszym Score</h3>
-<ul>
-<li>Astronomy</li>
-</ul>
-<pre class="r"><code>getLocationsWithBestScore(astronomyUsers, astronomyPosts)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    Location                                               Scores
-##    &lt;chr&gt;                                                   &lt;dbl&gt;
-##  1 United Kingdom                                           9279
-##  2 Taipei, Earth                                            5016
-##  3 A small planet somewhere in the vicinity of Betelgeuse   3130
-##  4 Copenhagen, Denmark                                      2795
-##  5 Houston, TX                                              2556
-##  6 Virginia, USA                                            2197
-##  7 California                                               1904
-##  8 USA                                                      1527
-##  9 Munich, Germany                                          1416
-## 10 Europe                                                   1291</code></pre>
-<ul>
-<li>Ebooks</li>
-</ul>
-<pre class="r"><code>getLocationsWithBestScore(ebooksUsers, ebooksPosts)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    Location             Scores
-##    &lt;chr&gt;                 &lt;dbl&gt;
-##  1 Germany                 961
-##  2 Pittsburgh, PA          587
-##  3 Italy                   565
-##  4 Canada                  439
-##  5 Portland, OR            406
-##  6 Houston, TX             353
-##  7 New York, NY            270
-##  8 Milan, Italy            221
-##  9 Death Star              193
-## 10 Springfield, IL, USA    154</code></pre>
-<ul>
-<li>Devops</li>
-</ul>
-<pre class="r"><code>getLocationsWithBestScore(devopsUsers, devopsPosts)</code></pre>
-<pre><code>## # A tibble: 10 × 2
-##    Location                          Scores
-##    &lt;chr&gt;                              &lt;dbl&gt;
-##  1 Utrecht, Netherlands                1163
-##  2 Brighton, England, United Kingdom   1000
-##  3 Nantes, France                       979
-##  4 Ramat Gan, Israel                    897
-##  5 Germany                              835
-##  6 London, UK                           718
-##  7 www.abitmore-scm.com                 626
-##  8 Ottawa, ON, Canada                   585
-##  9 San Francisco Bay Area               556
-## 10 Kansas City, KS, United States       374</code></pre>
-</div>
 <div id="lata-w-których-zarejestrowała-się-największa-liczba-użytkowników" class="section level3">
 <h3>Lata, w których zarejestrowała się największa liczba
 użytkowników</h3>
@@ -593,6 +539,63 @@ użytkowników</h3>
 ## 4 2020   1880
 ## 5 2021   1605
 ## 6 2022    312</code></pre>
+</div>
+<div id="lokalizacje-z-najlepszym-score" class="section level3">
+<h3>Lokalizacje z najlepszym Score</h3>
+<ul>
+<li>Astronomy</li>
+</ul>
+<pre class="r"><code>getLocationsWithBestScore(astronomyUsers, astronomyPosts)</code></pre>
+<pre><code>## # A tibble: 1,000 × 2
+##    Location                                               Scores
+##    &lt;chr&gt;                                                   &lt;dbl&gt;
+##  1 United Kingdom                                           9279
+##  2 Taipei, Earth                                            5016
+##  3 A small planet somewhere in the vicinity of Betelgeuse   3130
+##  4 Copenhagen, Denmark                                      2795
+##  5 Houston, TX                                              2556
+##  6 Virginia, USA                                            2197
+##  7 California                                               1904
+##  8 USA                                                      1527
+##  9 Munich, Germany                                          1416
+## 10 Europe                                                   1291
+## # … with 990 more rows</code></pre>
+<ul>
+<li>Ebooks</li>
+</ul>
+<pre class="r"><code>getLocationsWithBestScore(ebooksUsers, ebooksPosts)</code></pre>
+<pre><code>## # A tibble: 411 × 2
+##    Location             Scores
+##    &lt;chr&gt;                 &lt;dbl&gt;
+##  1 Germany                 961
+##  2 Pittsburgh, PA          587
+##  3 Italy                   565
+##  4 Canada                  439
+##  5 Portland, OR            406
+##  6 Houston, TX             353
+##  7 New York, NY            270
+##  8 Milan, Italy            221
+##  9 Death Star              193
+## 10 Springfield, IL, USA    154
+## # … with 401 more rows</code></pre>
+<ul>
+<li>Devops</li>
+</ul>
+<pre class="r"><code>getLocationsWithBestScore(devopsUsers, devopsPosts)</code></pre>
+<pre><code>## # A tibble: 1,000 × 2
+##    Location                          Scores
+##    &lt;chr&gt;                              &lt;dbl&gt;
+##  1 Utrecht, Netherlands                1163
+##  2 Brighton, England, United Kingdom   1000
+##  3 Nantes, France                       979
+##  4 Ramat Gan, Israel                    897
+##  5 Germany                              835
+##  6 London, UK                           718
+##  7 www.abitmore-scm.com                 626
+##  8 Ottawa, ON, Canada                   585
+##  9 San Francisco Bay Area               556
+## 10 Kansas City, KS, United States       374
+## # … with 990 more rows</code></pre>
 </div>
 <div id="najpopularniejsze-tagi-w-każdym-roku" class="section level3">
 <h3>Najpopularniejsze tagi w każdym roku</h3>
