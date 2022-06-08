@@ -433,7 +433,7 @@ getLocationsWithBestScore &lt;- function(usersDataFrame, postsDataFrame)
     group_by(Location) %&gt;%
     summarise(Scores = sum(as.numeric(Score))) %&gt;%
     arrange(desc(Scores)) %&gt;%
-    head(1000)
+    head(10)
 }
 
 groupTags &lt;- function(postsDataFrame)
@@ -546,7 +546,7 @@ użytkowników</h3>
 <li>Astronomy</li>
 </ul>
 <pre class="r"><code>getLocationsWithBestScore(astronomyUsers, astronomyPosts)</code></pre>
-<pre><code>## # A tibble: 1,000 × 2
+<pre><code>## # A tibble: 10 × 2
 ##    Location                                               Scores
 ##    &lt;chr&gt;                                                   &lt;dbl&gt;
 ##  1 United Kingdom                                           9279
@@ -558,13 +558,12 @@ użytkowników</h3>
 ##  7 California                                               1904
 ##  8 USA                                                      1527
 ##  9 Munich, Germany                                          1416
-## 10 Europe                                                   1291
-## # … with 990 more rows</code></pre>
+## 10 Europe                                                   1291</code></pre>
 <ul>
 <li>Ebooks</li>
 </ul>
 <pre class="r"><code>getLocationsWithBestScore(ebooksUsers, ebooksPosts)</code></pre>
-<pre><code>## # A tibble: 411 × 2
+<pre><code>## # A tibble: 10 × 2
 ##    Location             Scores
 ##    &lt;chr&gt;                 &lt;dbl&gt;
 ##  1 Germany                 961
@@ -576,13 +575,12 @@ użytkowników</h3>
 ##  7 New York, NY            270
 ##  8 Milan, Italy            221
 ##  9 Death Star              193
-## 10 Springfield, IL, USA    154
-## # … with 401 more rows</code></pre>
+## 10 Springfield, IL, USA    154</code></pre>
 <ul>
 <li>Devops</li>
 </ul>
 <pre class="r"><code>getLocationsWithBestScore(devopsUsers, devopsPosts)</code></pre>
-<pre><code>## # A tibble: 1,000 × 2
+<pre><code>## # A tibble: 10 × 2
 ##    Location                          Scores
 ##    &lt;chr&gt;                              &lt;dbl&gt;
 ##  1 Utrecht, Netherlands                1163
@@ -594,8 +592,7 @@ użytkowników</h3>
 ##  7 www.abitmore-scm.com                 626
 ##  8 Ottawa, ON, Canada                   585
 ##  9 San Francisco Bay Area               556
-## 10 Kansas City, KS, United States       374
-## # … with 990 more rows</code></pre>
+## 10 Kansas City, KS, United States       374</code></pre>
 </div>
 <div id="najpopularniejsze-tagi-w-każdym-roku" class="section level3">
 <h3>Najpopularniejsze tagi w każdym roku</h3>

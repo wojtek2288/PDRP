@@ -75,7 +75,7 @@ getLocationsWithBestScore <- function(usersDataFrame, postsDataFrame)
     group_by(Location) %>%
     summarise(Scores = sum(as.numeric(Score))) %>%
     arrange(desc(Scores)) %>%
-    head(1000)
+    head(10)
 }
 
 groupTags <- function(postsDataFrame)
