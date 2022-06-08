@@ -1,4 +1,13 @@
-```{r}
+---
+title: "Przetwarzanie danych w językach R i Python"
+subtitle: "Praca domowa nr 2"
+author: "Wojciech Klusek, Aleksander Kuś"
+output: html_document
+---
+
+## Biblioteki i funkcje pomocnicze
+
+```{r, warning=FALSE, message=FALSE}
 library("xml2")
 library("dplyr")
 library("rvest")
@@ -13,7 +22,9 @@ getDataFromFile <- function(path)
 }
 ```
 
-```{r}
+## Wczytanie danych
+
+```{r, warning=FALSE, message=FALSE}
 
 astronomyBadges <- getDataFromFile("astronomy.stackexchange.com/Badges.xml")
 astronomyComments <- getDataFromFile("astronomy.stackexchange.com/Comments.xml")
@@ -42,7 +53,11 @@ devopsTags <- getDataFromFile("devops.stackexchange.com/Tags.xml")
 devopsUsers <- getDataFromFile("devops.stackexchange.com/Users.xml")
 devopsVotes <- getDataFromFile("devops.stackexchange.com/Votes.xml")
 
+```
 
+## Definicje zapytań
+
+```{r}
 getLocationsWithBestScore <- function(usersDataFrame, postsDataFrame)
 {
   usersDataFrame %>%
@@ -114,4 +129,86 @@ tagsWithBestAvgScore <- function(postsDataFrame)
     head(10)
 }
 
+```
+
+## Wyniki
+
+### Lokalizacje z najlepszym Score
+
+- Astronomy
+
+```{r}
+getLocationsWithBestScore(astronomyUsers, astronomyPosts)
+```
+
+- Ebooks
+
+```{r}
+getLocationsWithBestScore(ebooksUsers, ebooksPosts)
+```
+
+- Devops
+
+```{r}
+getLocationsWithBestScore(devopsUsers, devopsPosts)
+```
+
+### Lata, w których zarejestrowała się największa liczba użytkowników
+
+- Astronomy
+
+```{r}
+getYearsWhenMostUsersSignedUp(astronomyPosts)
+```
+
+- Ebooks
+
+```{r}
+getYearsWhenMostUsersSignedUp(ebooksPosts)
+```
+
+- Devops
+
+```{r}
+getYearsWhenMostUsersSignedUp(devopsPosts)
+```
+
+### Najpopularniejsze tagi w każdym roku
+
+- Astronomy
+
+```{r}
+mostPopularTagInYears(astronomyPosts)
+```
+
+- Ebooks
+
+```{r}
+mostPopularTagInYears(ebooksPosts)
+```
+
+- Devops
+
+```{r}
+mostPopularTagInYears(devopsPosts)
+```
+
+### Tagi z najlepszym średnim Score
+
+- Astronomy
+
+```{r}
+tagsWithBestAvgScore(astronomyPosts)
+```
+
+- Ebooks
+
+```{r}
+tagsWithBestAvgScore(ebooksPosts)
+```
+
+- Devops
+
+```{r}
+tagsWithBestAvgScore(devopsPosts)
 ```

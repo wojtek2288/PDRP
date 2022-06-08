@@ -9,9 +9,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
+<meta name="author" content="Wojciech Klusek, Aleksander Kuś" />
 
 
-<title>script.knit</title>
+<title>Przetwarzanie danych w językach R i Python</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -361,21 +362,20 @@ pre code {
 
 
 
+<h1 class="title toc-ignore">Przetwarzanie danych w językach R i
+Python</h1>
+<h3 class="subtitle">Praca domowa nr 2</h3>
+<h4 class="author">Wojciech Klusek, Aleksander Kuś</h4>
 
 </div>
 
 
+<div id="biblioteki-i-funkcje-pomocnicze" class="section level2">
+<h2>Biblioteki i funkcje pomocnicze</h2>
 <pre class="r"><code>library(&quot;xml2&quot;)
-library(&quot;dplyr&quot;)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>library(&quot;rvest&quot;)
+library(&quot;dplyr&quot;)
+library(&quot;rvest&quot;)
+library(&quot;fuzzyjoin&quot;)
 
 getDataFromFile &lt;- function(path)
 {
@@ -384,12 +384,11 @@ getDataFromFile &lt;- function(path)
   rows &lt;- doc %&gt;% xml_nodes(&quot;row&quot;)
   bind_rows(lapply(xml_attrs(rows), function(x) data.frame(as.list(x), stringsAsFactors=FALSE)))
 }</code></pre>
-<pre class="r"><code>astronomyBadges &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Badges.xml&quot;)</code></pre>
-<pre><code>## Warning: `xml_nodes()` was deprecated in rvest 1.0.0.
-## Please use `html_elements()` instead.
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.</code></pre>
-<pre class="r"><code>astronomyComments &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Comments.xml&quot;)
+</div>
+<div id="wczytanie-danych" class="section level2">
+<h2>Wczytanie danych</h2>
+<pre class="r"><code>astronomyBadges &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Badges.xml&quot;)
+astronomyComments &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Comments.xml&quot;)
 astronomyPostHistory &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/PostHistory.xml&quot;)
 astronomyPostLinks &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/PostLinks.xml&quot;)
 astronomyPosts &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Posts.xml&quot;)
@@ -397,10 +396,30 @@ astronomyTags &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Tags.xml&q
 astronomyUsers &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Users.xml&quot;)
 astronomyVotes &lt;- getDataFromFile(&quot;astronomy.stackexchange.com/Votes.xml&quot;)
 
-getLocationsWithBestScore &lt;- function()
+ebooksBadges &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/Badges.xml&quot;)
+ebooksComments &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/Comments.xml&quot;)
+ebooksPostHistory &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/PostHistory.xml&quot;)
+ebooksPostLinks &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/PostLinks.xml&quot;)
+ebooksPosts &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/Posts.xml&quot;)
+ebooksTags &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/Tags.xml&quot;)
+ebooksUsers &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/Users.xml&quot;)
+ebooksVotes &lt;- getDataFromFile(&quot;ebooks.stackexchange.com/Votes.xml&quot;)
+
+devopsBadges &lt;- getDataFromFile(&quot;devops.stackexchange.com/Badges.xml&quot;)
+devopsComments &lt;- getDataFromFile(&quot;devops.stackexchange.com/Comments.xml&quot;)
+devopsPostHistory &lt;- getDataFromFile(&quot;devops.stackexchange.com/PostHistory.xml&quot;)
+devopsPostLinks &lt;- getDataFromFile(&quot;devops.stackexchange.com/PostLinks.xml&quot;)
+devopsPosts &lt;- getDataFromFile(&quot;devops.stackexchange.com/Posts.xml&quot;)
+devopsTags &lt;- getDataFromFile(&quot;devops.stackexchange.com/Tags.xml&quot;)
+devopsUsers &lt;- getDataFromFile(&quot;devops.stackexchange.com/Users.xml&quot;)
+devopsVotes &lt;- getDataFromFile(&quot;devops.stackexchange.com/Votes.xml&quot;)</code></pre>
+</div>
+<div id="definicje-zapytań" class="section level2">
+<h2>Definicje zapytań</h2>
+<pre class="r"><code>getLocationsWithBestScore &lt;- function(usersDataFrame, postsDataFrame)
 {
-  astronomyUsers %&gt;%
-    inner_join(astronomyPosts, by=c(&#39;Id&#39; = &#39;OwnerUserId&#39;)) %&gt;%
+  usersDataFrame %&gt;%
+    inner_join(postsDataFrame, by=c(&#39;Id&#39; = &#39;OwnerUserId&#39;)) %&gt;%
     filter(Location != &#39;&#39;) %&gt;%
     group_by(Location) %&gt;%
     summarise(Scores = sum(as.numeric(Score))) %&gt;%
@@ -408,43 +427,284 @@ getLocationsWithBestScore &lt;- function()
     head(10)
 }
 
-getLocationsWithBestScore()</code></pre>
-<pre><code>## # A tibble: 10 x 2
-##    Location                                               Scores
-##    &lt;chr&gt;                                                   &lt;dbl&gt;
-##  1 United Kingdom                                           8766
-##  2 Taipei, Earth                                            4803
-##  3 A small planet somewhere in the vicinity of Betelgeuse   3113
-##  4 Copenhagen, Denmark                                      2599
-##  5 Houston, TX                                              2478
-##  6 Virginia, USA                                            2171
-##  7 California                                               1881
-##  8 Europe                                                   1483
-##  9 Munich, Germany                                          1398
-## 10 USA                                                      1344</code></pre>
-<pre class="r"><code>getYearsWhenMostUsersSignedUp &lt;- function()
+getYearsWhenMostUsersSignedUp &lt;- function(usersDataFrame)
 {
-  astronomyUsers %&gt;%
+  usersDataFrame %&gt;%
     group_by(Year = format(as.Date(CreationDate), &quot;%Y&quot;)) %&gt;%
     summarize(Count = n()) %&gt;%
     arrange(desc(Count)) %&gt;%
     head(10)
 }
 
-getYearsWhenMostUsersSignedUp()</code></pre>
-<pre><code>## # A tibble: 10 x 2
+groupTags &lt;- function(postsDataFrame)
+{
+  strings &lt;- postsDataFrame[, c(&quot;Tags&quot;)]
+  df &lt;- data.frame(matrix(ncol = 2, nrow = 0))
+  colnames(df) &lt;- c(&quot;PostId&quot;, &quot;Tag&quot;)
+  for (i in 1:length(strings))
+  {
+    if (is.na(strings[i]))
+    {
+      next
+    }
+    splited &lt;- strsplit(gsub(&#39;&lt;&#39;, &#39;&#39;, strings[i]), split = &quot;&gt;&quot;)
+    for (j in 1:length(splited[[1]]))
+    {
+      df[nrow(df) + 1,] = c(postsDataFrame[i, 1], splited[[1]][j])
+    }
+  }
+  
+  df
+}
+
+mostPopularTagInYears &lt;- function(postsDataFrame)
+{
+  groupedTags &lt;- groupTags(postsDataFrame)
+  
+  groupedTags %&gt;%
+    inner_join(postsDataFrame, c(&#39;PostId&#39; = &#39;Id&#39;)) %&gt;%
+    group_by(Year = format(as.Date(CreationDate), &quot;%Y&quot;), Tag) %&gt;%
+    summarise(Views = sum(as.numeric(ViewCount))) %&gt;%
+    arrange(desc(Views)) %&gt;%
+    select(Tag, Year, Views) -&gt; groupedTagsByYear
+  
+  groupedTagsByYear %&gt;%
+    group_by(Year) %&gt;%
+    summarise(Tag = Tag[which.max(Views)], Views = Views[which.max(Views)]) %&gt;%
+    arrange(desc(Views))
+}
+
+tagsWithBestAvgScore &lt;- function(postsDataFrame)
+{
+  groupedTags &lt;- groupTags(postsDataFrame)
+  
+  groupedTags %&gt;%
+    inner_join(postsDataFrame, c(&#39;PostId&#39; = &#39;Id&#39;)) %&gt;%
+    group_by(Tag) %&gt;%
+    summarise(AvgScore = mean(as.numeric(Score)), Count = n()) %&gt;%
+    arrange(desc(AvgScore)) %&gt;%
+    filter(Count &gt;= 10) %&gt;%
+    head(10)
+}</code></pre>
+</div>
+<div id="wyniki" class="section level2">
+<h2>Wyniki</h2>
+<div id="lokalizacje-z-najlepszym-score" class="section level3">
+<h3>Lokalizacje z najlepszym Score</h3>
+<ul>
+<li>Astronomy</li>
+</ul>
+<pre class="r"><code>getLocationsWithBestScore(astronomyUsers, astronomyPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    Location                                               Scores
+##    &lt;chr&gt;                                                   &lt;dbl&gt;
+##  1 United Kingdom                                           9279
+##  2 Taipei, Earth                                            5016
+##  3 A small planet somewhere in the vicinity of Betelgeuse   3130
+##  4 Copenhagen, Denmark                                      2795
+##  5 Houston, TX                                              2556
+##  6 Virginia, USA                                            2197
+##  7 California                                               1904
+##  8 USA                                                      1527
+##  9 Munich, Germany                                          1416
+## 10 Europe                                                   1291</code></pre>
+<ul>
+<li>Ebooks</li>
+</ul>
+<pre class="r"><code>getLocationsWithBestScore(ebooksUsers, ebooksPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    Location             Scores
+##    &lt;chr&gt;                 &lt;dbl&gt;
+##  1 Germany                 961
+##  2 Pittsburgh, PA          587
+##  3 Italy                   565
+##  4 Canada                  439
+##  5 Portland, OR            406
+##  6 Houston, TX             353
+##  7 New York, NY            270
+##  8 Milan, Italy            221
+##  9 Death Star              193
+## 10 Springfield, IL, USA    154</code></pre>
+<ul>
+<li>Devops</li>
+</ul>
+<pre class="r"><code>getLocationsWithBestScore(devopsUsers, devopsPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    Location                          Scores
+##    &lt;chr&gt;                              &lt;dbl&gt;
+##  1 Utrecht, Netherlands                1163
+##  2 Brighton, England, United Kingdom   1000
+##  3 Nantes, France                       979
+##  4 Ramat Gan, Israel                    897
+##  5 Germany                              835
+##  6 London, UK                           718
+##  7 www.abitmore-scm.com                 626
+##  8 Ottawa, ON, Canada                   585
+##  9 San Francisco Bay Area               556
+## 10 Kansas City, KS, United States       374</code></pre>
+</div>
+<div id="lata-w-których-zarejestrowała-się-największa-liczba-użytkowników" class="section level3">
+<h3>Lata, w których zarejestrowała się największa liczba
+użytkowników</h3>
+<ul>
+<li>Astronomy</li>
+</ul>
+<pre class="r"><code>getYearsWhenMostUsersSignedUp(astronomyPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 2
 ##    Year  Count
 ##    &lt;chr&gt; &lt;int&gt;
-##  1 2017   5035
-##  2 2018   4596
-##  3 2021   4289
-##  4 2020   4043
-##  5 2019   3921
-##  6 2016   3666
-##  7 2015   2742
-##  8 2014   2285
-##  9 2022    711
-## 10 2013    668</code></pre>
+##  1 2021   4559
+##  2 2020   4323
+##  3 2019   3690
+##  4 2016   3679
+##  5 2018   3376
+##  6 2017   3036
+##  7 2015   3022
+##  8 2014   2753
+##  9 2022   1314
+## 10 2013   1162</code></pre>
+<ul>
+<li>Ebooks</li>
+</ul>
+<pre class="r"><code>getYearsWhenMostUsersSignedUp(ebooksPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 2
+##    Year  Count
+##    &lt;chr&gt; &lt;int&gt;
+##  1 2014   1020
+##  2 2015    501
+##  3 2017    482
+##  4 2013    472
+##  5 2016    446
+##  6 2018    331
+##  7 2019    280
+##  8 2021    180
+##  9 2020    168
+## 10 2022     20</code></pre>
+<ul>
+<li>Devops</li>
+</ul>
+<pre class="r"><code>getYearsWhenMostUsersSignedUp(devopsPosts)</code></pre>
+<pre><code>## # A tibble: 6 × 2
+##   Year  Count
+##   &lt;chr&gt; &lt;int&gt;
+## 1 2017   2730
+## 2 2019   2586
+## 3 2018   2244
+## 4 2020   1880
+## 5 2021   1605
+## 6 2022    312</code></pre>
+</div>
+<div id="najpopularniejsze-tagi-w-każdym-roku" class="section level3">
+<h3>Najpopularniejsze tagi w każdym roku</h3>
+<ul>
+<li>Astronomy</li>
+</ul>
+<pre class="r"><code>mostPopularTagInYears(astronomyPosts)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Year&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    Year  Tag                      Views
+##    &lt;chr&gt; &lt;chr&gt;                    &lt;dbl&gt;
+##  1 2015  star                    450922
+##  2 2014  the-moon                406713
+##  3 2013  star                    263385
+##  4 2017  star                    249847
+##  5 2016  the-sun                 216152
+##  6 2018  the-sun                 153275
+##  7 2020  the-sun                 153003
+##  8 2019  black-hole              132499
+##  9 2021  observational-astronomy  92186
+## 10 2022  the-moon                 30677</code></pre>
+<ul>
+<li>Ebooks</li>
+</ul>
+<pre class="r"><code>mostPopularTagInYears(ebooksPosts)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Year&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    Year  Tag        Views
+##    &lt;chr&gt; &lt;chr&gt;      &lt;dbl&gt;
+##  1 2013  kindle    624699
+##  2 2014  kindle    590263
+##  3 2015  kindle    394238
+##  4 2016  kindle    198715
+##  5 2017  epub      136886
+##  6 2018  kindle    105510
+##  7 2019  law        23868
+##  8 2020  copyright   6465
+##  9 2021  kindle      2184
+## 10 2022  epub          74</code></pre>
+<ul>
+<li>Devops</li>
+</ul>
+<pre class="r"><code>mostPopularTagInYears(devopsPosts)</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Year&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   Year  Tag          Views
+##   &lt;chr&gt; &lt;chr&gt;        &lt;dbl&gt;
+## 1 2017  jenkins    1033233
+## 2 2018  jenkins     668801
+## 3 2019  jenkins     395214
+## 4 2020  docker      130859
+## 5 2021  kubernetes   36725
+## 6 2022  docker        1078</code></pre>
+</div>
+<div id="tagi-z-najlepszym-średnim-score" class="section level3">
+<h3>Tagi z najlepszym średnim Score</h3>
+<ul>
+<li>Astronomy</li>
+</ul>
+<pre class="r"><code>tagsWithBestAvgScore(astronomyPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    Tag                     AvgScore Count
+##    &lt;chr&gt;                      &lt;dbl&gt; &lt;int&gt;
+##  1 io                         12.7     14
+##  2 9th-planet                 10.5     34
+##  3 trappist-1                  9.09    23
+##  4 naked-eye                   8.71    56
+##  5 event-horizon-telescope     8.59    29
+##  6 solar-system-evolution      8.39    23
+##  7 plasma-physics              8.19    31
+##  8 oort-cloud                  8.14    36
+##  9 explosion                   8.11    18
+## 10 spiral-arms                 8       12</code></pre>
+<ul>
+<li>Ebooks</li>
+</ul>
+<pre class="r"><code>tagsWithBestAvgScore(ebooksPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    Tag         AvgScore Count
+##    &lt;chr&gt;          &lt;dbl&gt; &lt;int&gt;
+##  1 wifi           12.9     10
+##  2 free            9.82    11
+##  3 e-ink           8.73    22
+##  4 law             7.73    11
+##  5 linux           7.59    17
+##  6 software        7.56    27
+##  7 drm             7.55    51
+##  8 collections     7.3     10
+##  9 metadata        6.63    27
+## 10 publishing      6.62    56</code></pre>
+<ul>
+<li>Devops</li>
+</ul>
+<pre class="r"><code>tagsWithBestAvgScore(devopsPosts)</code></pre>
+<pre><code>## # A tibble: 10 × 3
+##    Tag                AvgScore Count
+##    &lt;chr&gt;                 &lt;dbl&gt; &lt;int&gt;
+##  1 terminology           12.7     85
+##  2 ansible-vault          9.64    11
+##  3 artifacts              9.4     30
+##  4 immutable-servers      8.73    11
+##  5 culture                8.71    87
+##  6 process                8.67    18
+##  7 project-management     8.06    17
+##  8 sre                    7.82    22
+##  9 capacity-planning      7.7     10
+## 10 backup                 7.06    16</code></pre>
+</div>
+</div>
 
 
 
